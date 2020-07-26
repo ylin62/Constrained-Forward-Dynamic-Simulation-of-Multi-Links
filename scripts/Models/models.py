@@ -5,8 +5,8 @@ class ExplictModel(object):
     '''
         build explict n chain bar model with uniform rod, no spring, 2-D
     '''
-    def __init__(self, m, l, potiential_field, 
-                 close_chain=True, external_input=None, energy_loss=None):
+    def __init__(self, m, l, potiential_field=None, 
+                 close_chain=True, external_input=None, damping=None):
         super(ExplictModel, self).__init__()
                 
         # physical parameters
@@ -27,18 +27,28 @@ class ExplictModel(object):
         self.n_rod = len(m)
         self.M = self.inertia_mtx()
         
+        self.potiential_field = np.zeros(3*self.n_rod)
         if potiential_field is not None:
-            assert len(potiential_field) == 3*self.n_rod, 'potiential energy field n*[x, y, tau]'
-            self.potiential_field = np.array(potiential_field)
-        else:
-            self.potiential_field = np.zeros(3*len(self.n_rod))
+            assert len(potiential_field) == 3*self.n_rod, 'potiential energy field n*[x, y, tau...]'
+            self.potiential_field = np.array(potiential_field)            
+        
+        self.external_input = np.zeros(3*self.n_rod)    
+        if external_input is not None:
+            assert len(external_input) == 3*self.n_rod, 'input needs to be a vector of length 3*n \
+                corresponding to [x, y, torque]'
+            self.external_input = np.array(external_input)
+        
+        self.damping = np.zeros(3*self.n_rod)
+        if damping is not None:
+            assert len(damping) == self.n_rod, 'only give dampings to joints, not including ground rod'
+            self.damping[2::3] = damping
         
         self.t = sp.symbols('t')
         
         # build generalized coordinates and velocities symbolic variables
         self.q, self.q_dot = [], []
         for i, mi in enumerate(m):
-            xc, yc, theta = 'xc'+'_'+str(i+1), 'yc'+'_'+str(i+1), 'theta_'+str(i+1)        
+            xc, yc, theta = 'x_c'+str(i+1), 'y_c'+str(i+1), 'theta_'+str(i+1)        
             self.q.extend([sp.Function(xc)(self.t), sp.Function(yc)(self.t), sp.Function(theta)(self.t)])
         self.q = sp.Matrix(self.q)
         self.q_dot = self.q.diff(self.t)
@@ -90,25 +100,25 @@ class ExplictModel(object):
                     
         return sp.Matrix(Constrains)
     
-    def system_gov(self):
+    def system_gov(self, t, y):
         
-        raise NotImplementedError
+        constrains = self.constrains()
+        A = constrains.jacobian(self.q)
+        f = self.external_input + self.M.diagonal() * self.potiential_field
+        
+        b = np.block([[self.M, A.T], [A, np.zeros((A.shape[0], A.shape[0]))]])
+        
+        # print((A.diff(self.t) * self.q_dot).shape)
+        # sp.pprint(A)
+        sp.pprint(constrains)
         
         
 if __name__ == "__main__":
     
     Demo = ExplictModel(m=[1, 1, 1], l=[1, 1, 1, 1], 
                         potiential_field=[0, 9.81, 0, 0, 9.81, 0, 0, 9.81, 0], 
-                        close_chain=True)
+                        close_chain=True, 
+                        external_input=[0, 0, 5, 0, 0, 0, 0, 0, 0], 
+                        damping=None)
     
-    L = Demo.lagrangian()
-    t = Demo.t
-    q = Demo.q
-    q_dot = Demo.q_dot
-    
-    M = Demo.M
-    A = Demo.constrains().jacobian(q)
-    
-    b = sp.Matrix([[M, A.T], [A, np.zeros((A.shape[0], A.shape[0]))]])
-    
-    print(b.inverse())
+    Demo.system_gov(t=0, y=0)
