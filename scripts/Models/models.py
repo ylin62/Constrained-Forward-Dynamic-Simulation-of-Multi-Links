@@ -5,17 +5,16 @@ class ExplictModel(object):
     '''
         build explict n chain bar model with uniform rod, no spring, 2-D
     '''
-    def __init__(self, m, l, g=9.81, close_chain=True, external_input=None, energy_loss=None):
+    def __init__(self, m, l, potiential_field, 
+                 close_chain=True, external_input=None, energy_loss=None):
         super(ExplictModel, self).__init__()
                 
         # physical parameters
-        self.g = g
+
         self.close_chain = close_chain
         
-        if not isinstance(m, np.ndarray):
-            m = np.array(m)
-        if not isinstance(l, np.ndarray):
-            l = np.array(l)
+        m = np.array(m)
+        l = np.array(l)
             
         if close_chain:
             assert len(l) - len(m) == 1, 'closed chain should have one more rod length (ground rod) than rod mass'
@@ -26,6 +25,14 @@ class ExplictModel(object):
         self.m = m
         self.l = l
         self.n_rod = len(m)
+        self.M = self.inertia_mtx()
+        
+        if potiential_field is not None:
+            assert len(potiential_field) == 3*self.n_rod, 'potiential energy field n*[x, y, tau]'
+            self.potiential_field = np.array(potiential_field)
+        else:
+            self.potiential_field = np.zeros(3*len(self.n_rod))
+        
         self.t = sp.symbols('t')
         
         # build generalized coordinates and velocities symbolic variables
@@ -36,15 +43,21 @@ class ExplictModel(object):
         self.q = sp.Matrix(self.q)
         self.q_dot = self.q.diff(self.t)
         
+    def inertia_mtx(self):
+        
+        M = []
+        for i in range(self.n_rod):
+            M += [self.m[i], self.m[i], self.inertia[i]]
+        
+        M = np.diag(M)
+        
+        return M
+        
     def lagrangian(self):
-        
-        T, V = 0, 0
-        for i, m in enumerate(self.m):
-            T += 0.5 * (m * (self.q_dot[i*self.n_rod + 0]**2 + self.q_dot[i*self.n_rod + 1]**2) + self.inertia[i] * self.q_dot[i*self.n_rod + 2]**2)
-        
-        for i, mi in enumerate(self.m):
-            V += mi * self.g * self.q[i*self.n_rod + 1]
-            
+                
+        T = 0.5 * self.q_dot.T * self.M * self.q_dot
+        V = (self.potiential_field @ self.M).reshape(1, -1) * self.q
+
         Constrians = self.constrains()
         
         Lagrangian_multipliers = []
@@ -76,14 +89,26 @@ class ExplictModel(object):
             Constrains.extend(expr)
                     
         return sp.Matrix(Constrains)
+    
+    def system_gov(self):
+        
+        raise NotImplementedError
         
         
 if __name__ == "__main__":
     
-    Demo = ExplictModel(m=[1, 1, 1], l=[1, 1, 1, 1], g=9.81, close_chain=True)
+    Demo = ExplictModel(m=[1, 1, 1], l=[1, 1, 1, 1], 
+                        potiential_field=[0, 9.81, 0, 0, 9.81, 0, 0, 9.81, 0], 
+                        close_chain=True)
+    
     L = Demo.lagrangian()
     t = Demo.t
     q = Demo.q
     q_dot = Demo.q_dot
     
-    print(((L.jacobian(q_dot)).diff(t) - L.jacobian(q)).T)
+    M = Demo.M
+    A = Demo.constrains().jacobian(q)
+    
+    b = sp.Matrix([[M, A.T], [A, np.zeros((A.shape[0], A.shape[0]))]])
+    
+    print(b.inverse())
