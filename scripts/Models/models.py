@@ -1,5 +1,6 @@
 import numpy as np
 import sympy as sp
+import time
 
 class ExplictModel(object):
     '''
@@ -53,6 +54,10 @@ class ExplictModel(object):
         self.q = sp.Matrix(self.q)
         self.q_dot = self.q.diff(self.t)
         
+        self.Constrains = self.constrains()
+        self.A = self.Constrains.jacobian(self.q)
+        self.A_dot = self.A.diff(self.t)
+        
     def inertia_mtx(self):
         
         M = []
@@ -67,14 +72,12 @@ class ExplictModel(object):
                 
         T = 0.5 * self.q_dot.T * self.M * self.q_dot
         V = (self.potiential_field @ self.M).reshape(1, -1) * self.q
-
-        Constrians = self.constrains()
         
         Lagrangian_multipliers = []
-        for i in range(len(Constrians)):
+        for i in range(len(self.Constrians)):
             Lagrangian_multipliers.append(sp.symbols('lamda_'+str(i+1)))
         
-        L = sp.Matrix([T - V]) + sp.Matrix(Lagrangian_multipliers).T * Constrians
+        L = sp.Matrix([T - V]) + sp.Matrix(Lagrangian_multipliers).T * self.Constrians
         
         return L
 
@@ -97,28 +100,68 @@ class ExplictModel(object):
                 expr[0] += self.l[i] * sp.cos(self.q[i*self.n_rod + 2])
                 expr[1] += self.l[i] * sp.sin(self.q[i*self.n_rod + 2])
             Constrains.extend(expr)
-                    
-        return sp.Matrix(Constrains)
+        
+        Constrains = sp.Matrix(Constrains)
+        
+        return Constrains
     
     def system_gov(self, t, y):
         
-        constrains = self.constrains()
-        A = constrains.jacobian(self.q)
+        t0 = time.time()
+        
+        y_q, y_q_dot = np.split(y, 2)
+        
+        sub_q = list(map(lambda x, y: (x, y), self.q, y_q))
+        sub_q_dot = list(map(lambda x, y: (x, y), self.q_dot, y_q_dot))
+        
         f = self.external_input + self.M.diagonal() * self.potiential_field
         
-        b = np.block([[self.M, A.T], [A, np.zeros((A.shape[0], A.shape[0]))]])
+        a = np.block([[self.M, self.A.T], 
+                      [self.A, np.zeros((self.A.shape[0], self.A.shape[0]))]])
+
+        t_sub = time.time()
+        b = np.concatenate([f.reshape(-1, 1), -self.A_dot * self.q_dot])
+        print(time.time() - t_sub)
         
-        # print((A.diff(self.t) * self.q_dot).shape)
-        # sp.pprint(A)
-        sp.pprint(constrains)
+        t1 = time.time()
+        print(t1 - t0)
         
+        a = sp.Matrix(a).subs(sub_q)
+        b = sp.Matrix(b).subs(sub_q_dot)
+        b = b.subs(sub_q)
+        
+        t2 = time.time()
+        print(t2 - t1)
+        
+        c = np.linalg.solve(np.array(a).astype(float), np.array(b).astype(float))
+        
+        print(time.time() - t2)
+        
+        return np.append(y_q_dot, c[0:len(self.q)])
         
 if __name__ == "__main__":
     
-    Demo = ExplictModel(m=[1, 1, 1], l=[1, 1, 1, 1], 
+    from scipy.integrate import solve_ivp
+    import matplotlib.pyplot as plt
+    
+    Demo = ExplictModel(m=[1, 1, 1], l=[1, 4, 2.5, 3], 
                         potiential_field=[0, 9.81, 0, 0, 9.81, 0, 0, 9.81, 0], 
                         close_chain=True, 
                         external_input=[0, 0, 5, 0, 0, 0, 0, 0, 0], 
                         damping=None)
     
-    Demo.system_gov(t=0, y=0)
+    y = np.append([0, 0.5, np.pi/2, 1.876, 1.692, 0.353, 3.376, 1.192, 1.265], np.zeros(9))
+    
+    test = Demo.system_gov(t=0, y=y)
+    
+    print(test)
+    
+    # sol = solve_ivp(Demo.system_gov, [0, 1], y, method='RK23')
+    
+    # plt.figure()
+    # plt.plot(sol.t, sol.y[2])
+    # plt.figure()
+    # plt.plot(sol.t, sol.y[5])
+    # plt.figure()
+    # plt.plot(sol.t, sol.y[8])
+    # plt.show()
