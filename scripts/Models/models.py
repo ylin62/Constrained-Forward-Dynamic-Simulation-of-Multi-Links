@@ -55,7 +55,7 @@ class ExplictModel(object):
         
         M = np.diag(M)
         
-        return sp.Matrix(M)
+        return M
         
     def lagrangian(self):
                 
@@ -96,7 +96,7 @@ class ExplictModel(object):
     
     def system_gov(self):
         
-        f = self.external_input + self.M * self.potiential_field
+        f = self.external_input + np.matmul(self.M, self.potiential_field)
         a = np.block([[self.M, self.A.T], 
                       [self.A, np.zeros((self.A.shape[0], self.A.shape[0]))]])
         b = np.concatenate([f, -self.A_dot * self.q_dot])
@@ -109,22 +109,25 @@ class ExplictModel(object):
         if f is not None:
             assert len(f) == 3*self.n_rod, 'input needs to be a vector of length 3*n \
                 corresponding to [x, y, torque]'
+            f = np.array(f)
         else:
             f = np.zeros(3*self.n_rod)
         if g is not None:
             assert len(g) == 3*self.n_rod, 'potiential energy field n*[x, y, tau...]'
+            g = np.array(g)
         else:
             g = np.zeros(3*self.n_rod)
         if c is not None:
             assert len(c) == 3*self.n_rod
+            c = np.array(c)
             print("in development")
         else:
             c = np.zeros(3*self.n_rod)
 
         a = self.a(*y[:3*self.n_rod])
-        input_f = np.append(y, [f, np.array(self.M).diagonal() * g])
+        input_f = np.append(y, [f, self.M.diagonal() * g])
         b = self.b(*input_f)
-        c = np.linalg.solve(a, b.astype(float))
+        c = np.linalg.solve(a, b)
                 
         return np.append(y[3*self.n_rod:], c[:len(self.q)])
         
@@ -133,15 +136,16 @@ if __name__ == "__main__":
     from scipy.integrate import solve_ivp
     import matplotlib.pyplot as plt
     
+    t0 = time.time()
     Demo = ExplictModel(m=[1, 1, 1], l=[1, 4, 2.5, 3], close_chain=True)
     
     y = np.append([0, 0.5, np.pi/2, 1.8765, 1.692, 0.3533, 3.3765, 1.192, -1.8767], np.zeros(9))
     g = [0, -9.81, 0, 0, -9.81, 0, 0, -9.81, 0]
     f = [0, 0, 5, 0, 0, 0, 0, 0, 0]
     
-    t0 = time.time()
+    t1 = time.time()
     sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
-    print(time.time() - t0)
+    print(time.time() - t1)
     plt.figure()
     plt.plot(sol.t, sol.y[2])
     plt.figure()
