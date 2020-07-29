@@ -1,9 +1,10 @@
 import numpy as np
+import sympy as sp
 import matplotlib.pyplot as plt
 from matplotlib import animation, rc
 import matplotlib
 import seaborn as sns
-from IPython.display import HTML
+from IPython.display import display, Markdown, HTML
 sns.set_style("whitegrid")
 
 LW=2
@@ -12,6 +13,24 @@ FIGSIZE=(12, 8)
 MARKER = 20 
 ARROWLENGTH = 2.5
 HW = 0.8
+
+def print_constrains(Demo):
+    display(Markdown("### System constrains:"))
+    constrains = Demo.constrains()
+    for item in constrains:
+        display(sp.Eq(item, 0))
+        
+def print_govs(Model, f):
+    '''
+    print governing equations without damping for now
+    '''
+    display(Markdown("### System governing equations"))
+    L = Model.lagrangian()
+    left = (L.jacobian(Model.q_dot)).diff(Model.t)
+    right = L.jacobian(Model.q)
+    
+    for i, item in enumerate(left):
+        display(sp.Eq(item, right[i] + f[i]))
 
 class SolutionDemo(object):
     """docstring for ClassName"""
