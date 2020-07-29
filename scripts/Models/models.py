@@ -60,7 +60,7 @@ class ExplictModel(object):
     def lagrangian(self):
                 
         T = 0.5 * self.q_dot.T * self.M * self.q_dot
-        V = (self.potiential_field * self.M).reshape(1, -1) * self.q
+        V = (self.potiential_field.T * self.M) * self.q
         
         Lagrangian_multipliers = []
         for i in range(len(self.Constrains)):
@@ -143,14 +143,15 @@ if __name__ == "__main__":
     g = [0, -9.81, 0, 0, -9.81, 0, 0, -9.81, 0]
     f = [0, 0, 5, 0, 0, 0, 0, 0, 0]
     
-    t1 = time.time()
-    sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
-    print(time.time() - t1)
-    plt.figure()
-    plt.plot(sol.t, sol.y[2])
-    plt.figure()
-    plt.plot(sol.t, sol.y[5])
-    plt.figure()
-    plt.plot(sol.t, sol.y[8])
-    plt.show()
+    # t1 = time.time()
+    # sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
+    # print(time.time() - t1)
+    # plt.figure()
+    # plt.plot(sol.t, sol.y[2])
+    # plt.figure()
+    # plt.plot(sol.t, sol.y[5])
+    # plt.figure()
+    # plt.plot(sol.t, sol.y[8])
+    # plt.show()
     
+    print(Demo.lagrangian())
