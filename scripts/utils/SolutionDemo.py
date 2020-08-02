@@ -17,8 +17,7 @@ HW = 0.8
 
 def print_constrains(Demo):
     display(Markdown("### System constrains:"))
-    constrains = Demo.constrains()
-    for item in constrains:
+    for item in Demo.constrains:
         display(sp.Eq(item, 0))
         
 def print_govs(Model, f):
@@ -26,7 +25,7 @@ def print_govs(Model, f):
     print governing equations without damping for now
     '''
     display(Markdown("### System governing equations"))
-    L = Model.lagrangian()
+    L = Model.lagrangian
     left = (L.jacobian(Model.q_dot)).diff(Model.t)
     right = L.jacobian(Model.q)
     
@@ -35,9 +34,10 @@ def print_govs(Model, f):
         
 def get_multipliers(model, f, g, sol, show=False):
     
+    M = np.diagonal(np.array(model.M).astype(float))
     multips = []
     for y in sol.y.T:
-        input_f = np.append(y, [f, model.M.diagonal() * g])
+        input_f = np.append(y, [f, M * g])
         a = model.a(*y[:3*model.n_rod])
         b = model.b(*input_f)
         multips += [-np.linalg.solve(a, b)[3*model.n_rod:]]
