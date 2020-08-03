@@ -195,13 +195,13 @@ class ProjectModel(BaseModel):
         return ode[:, 0]
     
 class ExplictClose(ExplictModel):
-    """docstring for ExplictClose"""
+    """With seperate part constrains, join at second to last joint"""
         
     @property
     def constrains(self):
         
         Constrains = []
-        for i in range(self.n_rod - 1):
+        for i in range(self.n_rod):
             expr = self.q[i*3:i*3+2]
             expr[0] -= self.l[i]/2 * sp.cos(self.q[i*3 + 2])
             expr[1] -= self.l[i]/2 * sp.sin(self.q[i*3 + 2])
@@ -215,7 +215,7 @@ class ExplictClose(ExplictModel):
             expr = self.q[(self.n_rod-1)*3:(self.n_rod-1)*3+2]
             expr[0] += -self.l[-1] - self.l[-2]/2 * sp.cos(self.q[3*(self.n_rod-1) + 2])
             expr[1] += - self.l[-2]/2 * sp.sin(self.q[3*(self.n_rod-1) + 2])
-            Constrains.extend(expr)
+            Constrains[-2:] = expr
             
             base_constrain = [0, 0]
             for i in range(self.n_rod - 1):
@@ -236,7 +236,7 @@ class ApproximateClose(ApproximateModel):
     def constrains(self):
         
         Constrains = []
-        for i in range(self.n_rod - 1):
+        for i in range(self.n_rod):
             expr = self.q[i*3:i*3+2]
             expr[0] -= self.l[i]/2 * sp.cos(self.q[i*3 + 2])
             expr[1] -= self.l[i]/2 * sp.sin(self.q[i*3 + 2])
@@ -250,7 +250,7 @@ class ApproximateClose(ApproximateModel):
             expr = self.q[(self.n_rod-1)*3:(self.n_rod-1)*3+2]
             expr[0] += -self.l[-1] - self.l[-2]/2 * sp.cos(self.q[3*(self.n_rod-1) + 2])
             expr[1] += - self.l[-2]/2 * sp.sin(self.q[3*(self.n_rod-1) + 2])
-            Constrains.extend(expr)
+            Constrains[-2:] = expr
             
             base_constrain = [0, 0]
             for i in range(self.n_rod - 1):
@@ -262,8 +262,8 @@ class ApproximateClose(ApproximateModel):
         
         Constrains = sp.Matrix(Constrains)
         
-        return Constrains
-    
+        return Constrains  
+     
 class ProjectClose(ProjectModel):
     """docstring for ProjectClose"""
     
@@ -271,7 +271,7 @@ class ProjectClose(ProjectModel):
     def constrains(self):
         
         Constrains = []
-        for i in range(self.n_rod - 1):
+        for i in range(self.n_rod):
             expr = self.q[i*3:i*3+2]
             expr[0] -= self.l[i]/2 * sp.cos(self.q[i*3 + 2])
             expr[1] -= self.l[i]/2 * sp.sin(self.q[i*3 + 2])
@@ -285,7 +285,7 @@ class ProjectClose(ProjectModel):
             expr = self.q[(self.n_rod-1)*3:(self.n_rod-1)*3+2]
             expr[0] += -self.l[-1] - self.l[-2]/2 * sp.cos(self.q[3*(self.n_rod-1) + 2])
             expr[1] += - self.l[-2]/2 * sp.sin(self.q[3*(self.n_rod-1) + 2])
-            Constrains.extend(expr)
+            Constrains[-2:] = expr
             
             base_constrain = [0, 0]
             for i in range(self.n_rod - 1):
@@ -297,7 +297,7 @@ class ProjectClose(ProjectModel):
         
         Constrains = sp.Matrix(Constrains)
         
-        return Constrains
+        return Constrains   
        
         
 if __name__ == "__main__":
@@ -315,41 +315,13 @@ if __name__ == "__main__":
     f = [0, 0, 5, 0, 0, 0, 0, 0, 0]
     
     #####################################Test Explict Model##########################################
-    # y = np.append([0, 0.5, np.pi/2, 1.8765, 1.692, 0.3533, 3.3765, 1.192, -1.8767], np.zeros(9))
-    # # y = np.append([3.06161700e-17,  5.00000000e-01,  np.pi/2, 1.87648529e+00,  1.69195588e+00, 
-    # #                -5.92990441e+00,  3.37648529e+00,  1.19195588e+00,  1.06896358e+01], np.zeros(9))
-    # t0 = time.time()
-    # Demo = ExplictModel(m=m, l=l, close_chain=True)
-    # # t0 = time.time()
-    # # Demo.sim(t=0, y=y, f=f, g=g, c=None)
-    # # print(time.time() - t0)
-    # # print(Demo.sim(t=0, y=y, f=f, g=g, c=None))
-    # t1 = time.time()
-    # sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
-    # print(time.time() - t1)
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[2])
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[5])
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[8])
-    # plt.show()
-    
-    # print(Demo.lagrangian)
-    
-    ####################################Test Approximate Model######################################
-    y = np.append([3.06161700e-17,  5.00000000e-01,  np.pi/2, 1.87648529e+00,  1.69195588e+00, 
-                   -5.92990441e+00,  3.37648529e+00,  1.19195588e+00,  1.06896358e+01], 
-                  np.zeros(9))
-    k = np.tile([1e6], 8)
-    Demo = ApproximateModel(m=m, l=l, k=k, close_chain=True)    
-    # t0 = time.time()
-    # Demo.sim(t=0, y=y, f=f, g=g, c=None)
-    # print(time.time() - t0)
-    # print(Demo.sim(t=0, y=y, f=f, g=g, c=None))
+    y = np.append([0, 0.5, np.pi/2, 1.8765, 1.692, 0.3533, 3.3765, 1.192, -1.8767], np.zeros(9))
+    # y = np.append([3.06161700e-17,  5.00000000e-01,  np.pi/2, 1.87648529e+00,  1.69195588e+00, 
+    #                -5.92990441e+00,  3.37648529e+00,  1.19195588e+00,  1.06896358e+01], np.zeros(9))
+    Demo = ExplictModel(m=m, l=l, close_chain=True)
     t1 = time.time()
-    sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
-    print(sol.t.shape)
+    # sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
+    sol = ode4(Demo.sim, np.linspace(0, 10, 5000), y, args=(f, g, None))
     print(time.time() - t1)
     plt.figure()
     plt.plot(sol.t, sol.y[2])
@@ -358,6 +330,30 @@ if __name__ == "__main__":
     plt.figure()
     plt.plot(sol.t, sol.y[8])
     plt.show()
+    
+    # print(Demo.lagrangian)
+    
+    ####################################Test Approximate Model######################################
+    # y = np.append([3.06161700e-17,  5.00000000e-01,  np.pi/2, 1.87648529e+00,  1.69195588e+00, 
+    #                -5.92990441e+00,  3.37648529e+00,  1.19195588e+00,  1.06896358e+01], 
+    #               np.zeros(9))
+    # k = np.tile([1e6], 8)
+    # Demo = ApproximateModel(m=m, l=l, k=k, close_chain=True)    
+    # # t0 = time.time()
+    # # Demo.sim(t=0, y=y, f=f, g=g, c=None)
+    # # print(time.time() - t0)
+    # # print(Demo.sim(t=0, y=y, f=f, g=g, c=None))
+    # t1 = time.time()
+    # sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
+    # print(sol.t.shape)
+    # print(time.time() - t1)
+    # plt.figure()
+    # plt.plot(sol.t, sol.y[2])
+    # plt.figure()
+    # plt.plot(sol.t, sol.y[5])
+    # plt.figure()
+    # plt.plot(sol.t, sol.y[8])
+    # plt.show()
     
     ####################################Test Projection Model########################################
     # y = np.append([3.06161700e-17,  5.00000000e-01,  np.pi/2, 1.87648529e+00,  1.69195588e+00, 
