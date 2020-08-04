@@ -1,5 +1,6 @@
 import numpy as np
 import sympy as sp
+from scipy.optimize import fsolve
 # np.seterr('raise')
 
 class BaseModel(object):
@@ -92,6 +93,49 @@ class BaseModel(object):
         Constrains = sp.Matrix(Constrains)
         
         return Constrains
+    
+    def initial_condition(self, y0, y_dot):
+        
+        y0 = np.array(y0)
+        valid_input = np.where(y0 != None)[0]
+        if valid_input.size < len(self.q):
+            y0_left = np.delete(np.arange(len(self.q)), valid_input)
+            c = self.constrains
+            for i in valid_input:
+                c = c.subs(self.q[i], y0[i])
+            q = np.delete(self.q, valid_input)
+            func = sp.lambdify(q, c)
+            root = fsolve(lambda x, func=func: func(*x).flatten(), np.zeros(len(self.q) - len(valid_input)))
+            pos = np.zeros(len(self.q))
+            pos[valid_input] = y0[valid_input]
+            pos[y0_left] = root
+        else:
+            pos = y0
+        
+        y_dot = np.array(y_dot)
+        valid_dot = np.where(y_dot != None)[0]
+        if valid_dot.size < len(self.q_dot):
+            vel_constrains = self.constrains.diff(self.t)
+            func_dot = sp.lambdify(sp.Matrix([self.q, self.q_dot]), vel_constrains)
+            
+            input_root = np.zeros(2*len(self.q))
+            input_root[:len(self.q)] = pos
+            input_root[valid_dot + len(self.q)] = y_dot[valid_dot]
+
+            idx_left = np.delete(np.arange(len(self.q)) + len(self.q), valid_dot)
+
+            def func(x, fun):
+                input_root[idx_left] = x
+                return fun(*input_root).flatten()
+            
+            root_dot = fsolve(func, np.zeros(len(self.q) - len(valid_dot)), args=func_dot)
+            vel = np.zeros(len(self.q))
+            vel[valid_dot] = y_dot[valid_dot]
+            vel[np.delete(np.arange(len(self.q)), valid_dot)] = root_dot
+        else:
+            vel = y_dot
+
+        return pos, vel
     
     def system_gov(self):
         pass
@@ -194,7 +238,7 @@ class ProjectModel(BaseModel):
         
         return ode[:, 0]
     
-class ExplictClose(ExplictModel):
+class ExplictAlt(ExplictModel):
     """With seperate part constrains, join at second to last joint"""
         
     @property
@@ -229,7 +273,7 @@ class ExplictClose(ExplictModel):
         
         return Constrains   
     
-class ApproximateClose(ApproximateModel):
+class ApproximateAlt(ApproximateModel):
     """docstring for CloseFourBar"""
     
     @property
@@ -264,7 +308,7 @@ class ApproximateClose(ApproximateModel):
         
         return Constrains  
      
-class ProjectClose(ProjectModel):
+class ProjectAlt(ProjectModel):
     """docstring for ProjectClose"""
     
     @property
@@ -315,13 +359,18 @@ if __name__ == "__main__":
     f = [0, 0, 5, 0, 0, 0, 0, 0, 0]
     
     #####################################Test Explict Model##########################################
-    y = np.append([0, 0.5, np.pi/2, 1.8765, 1.692, 0.3533, 3.3765, 1.192, -1.8767], np.zeros(9))
+    # y = np.append([0, 0.5, np.pi/2, 1.8765, 1.692, 0.3533, 3.3765, 1.192, -1.8767], np.zeros(9))
     # y = np.append([3.06161700e-17,  5.00000000e-01,  np.pi/2, 1.87648529e+00,  1.69195588e+00, 
     #                -5.92990441e+00,  3.37648529e+00,  1.19195588e+00,  1.06896358e+01], np.zeros(9))
+    y0 = [None, None, np.pi/2, None, None, None, None, None, None]
+    y_dot = [None, None, 0.1, None, None, None, None, None, None]
     Demo = ExplictModel(m=m, l=l, close_chain=True)
+    pos, vel = Demo.initial_condition(y0, y_dot)
+    y = np.append(pos, vel)
+    # y = np.append(y, np.zeros(9))
     t1 = time.time()
-    # sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
-    sol = ode4(Demo.sim, np.linspace(0, 10, 5000), y, args=(f, g, None))
+    sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
+    # sol = ode4(Demo.sim, np.linspace(0, 10, 5000), y, args=(f, g, None))
     print(time.time() - t1)
     plt.figure()
     plt.plot(sol.t, sol.y[2])
@@ -384,9 +433,9 @@ if __name__ == "__main__":
     #                -9.96782005e-01,  2.58601471e+00, -1.17945588e+00, -1.90835893e+00], 
     #               np.zeros(9))
     # k = np.tile([1e6], 8)
-    # Demo = ExplictClose(m, l, close_chain=True)
-    # Demo = ApproximateClose(m, l, k, close_chain=True)
-    # Demo = ProjectClose(m ,l, close_chain=True)
+    # Demo = ExplictAlt(m, l, close_chain=True)
+    # Demo = ApproximateAlt(m, l, k, close_chain=True)
+    # Demo = ProjectAlt(m ,l, close_chain=True)
     # # t0 = time.time()
     # # Demo.sim(t=0, y=y, f=f, g=g, c=None)
     # # print(time.time() - t0)
