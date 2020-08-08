@@ -3,14 +3,12 @@ import numpy as np
 import sympy as sp
 import matplotlib.pyplot as plt
 from matplotlib import animation, rc
-import matplotlib
 import seaborn as sns
 from IPython.display import display, Markdown, HTML
-sns.set_style("whitegrid")
 
 LW=2
 FONTSIZE=18
-FIGSIZE=(12, 8)
+FIGSIZE=(10, 6)
 MARKER = 10
 ARROWLENGTH = 2.5
 HW = 0.8
@@ -34,6 +32,7 @@ def print_govs(Model, f):
         
 def get_multipliers(model, f, g, sol, show=False):
     
+    sns.set_style("whitegrid")
     M = np.diagonal(np.array(model.M).astype(float))
     multips = []
     for y in sol.y.T:
@@ -73,10 +72,34 @@ class SolutionDemo(object):
         self.l = l[:len(m)]
         self.rot = rot
         
+    @property
+    def links(self):
+        
+        if self.rot is not None:
+            rot_plot = np.array([[np.cos(self.rot), -np.sin(self.rot)], 
+                                 [np.sin(self.rot), np.cos(self.rot)]])
+        
+        links = []
+        for i in range(self.n_rod):
+            xc, yc, theta = self.y[i*3:i*3+3]
+            bar = []
+            for x, y, h in zip(xc, yc, theta):
+                rot_mtx = np.array([[np.cos(h), -np.sin(h)], 
+                                    [np.sin(h), np.cos(h)]])
+                if self.rot is None:
+                    bar += [np.dot(rot_mtx, [[-0.5*self.l[i], 0.5*self.l[i]], [0, 0]]) + np.array([[x], [y]])]
+                else:
+                    temp = np.dot(rot_mtx, [[-0.5*self.l[i], 0.5*self.l[i]], [0, 0]]) + np.array([[x], [y]])
+                    bar += [np.dot(rot_plot, temp)]
+            links += [np.array(bar)]
+            
+        return np.array(links)
+        
     def plot_solution(self, idx):
         '''
         plot chain links in 2D
         '''
+        sns.set_style("whitegrid")
         colors = sns.hls_palette(self.n_rod, l=.3, s=.8) 
         fig, ax = plt.subplots(figsize=FIGSIZE)
         
@@ -105,30 +128,23 @@ class SolutionDemo(object):
             
         plt.show()
     
-    @property
-    def links(self):
+    def plot_angles(self):
         
-        if self.rot is not None:
-            rot_plot = np.array([[np.cos(self.rot), -np.sin(self.rot)], 
-                                 [np.sin(self.rot), np.cos(self.rot)]])
+        sns.set_style("whitegrid")
+        fig, ax = plt.subplots(figsize=FIGSIZE)
+        ax.tick_params(axis='both', which='major', labelsize=FONTSIZE)
+        ax.xaxis.offsetText.set_fontsize(FONTSIZE)
+        ax.yaxis.offsetText.set_fontsize(FONTSIZE)
         
-        links = []
         for i in range(self.n_rod):
-            xc, yc, theta = self.y[i*3:i*3+3]
-            bar = []
-            for x, y, h in zip(xc, yc, theta):
-                rot_mtx = np.array([[np.cos(h), -np.sin(h)], 
-                                    [np.sin(h), np.cos(h)]])
-                if self.rot is None:
-                    bar += [np.dot(rot_mtx, [[-0.5*self.l[i], 0.5*self.l[i]], [0, 0]]) + np.array([[x], [y]])]
-                else:
-                    temp = np.dot(rot_mtx, [[-0.5*self.l[i], 0.5*self.l[i]], [0, 0]]) + np.array([[x], [y]])
-                    bar += [np.dot(rot_plot, temp)]
-            links += [np.array(bar)]
-            
-        return np.array(links)
-
-    def play_IPython(self, interval=50, title=None, save_as=None):
+            ax.plot(self.t, self.y[i*3+2], lw=LW, label='$\\theta_{'+str(i+1)+'}$')
+        ax.set_xlabel('T [s]', fontsize=FONTSIZE)
+        ax.set_ylabel('Angle [rads]', fontsize=FONTSIZE)
+        fig.legend(fontsize=FONTSIZE)
+        
+        plt.show()
+        
+    def animate(self, interval=100, title=None, save_as=None, show_angle=False, multipliers=None):
         
         lim = sum(self.l)
         fig, ax = plt.subplots(figsize=FIGSIZE)
@@ -139,7 +155,7 @@ class SolutionDemo(object):
         ax.set_ylim(( -lim, lim))
         if title is not None:
             fig.suptitle(title, fontsize=FONTSIZE)
-        line, = ax.plot([], [], 'o-', lw=LW)
+        line, = ax.plot([], [], 'o-', lw=LW, markersize=MARKER)
         time_template = 'time = {:.2f}s'
         time_text = ax.text(0.05, 0.9, '', fontsize=FONTSIZE, transform=ax.transAxes)
 
@@ -165,22 +181,14 @@ class SolutionDemo(object):
             if len(folder) > 0:
                 if not os.path.exists(folder):
                     os.makedirs(folder)
-            anim.save(save_as, writer='ffmpeg')
+            
+            if save_as.split('.')[-1] == 'gif':        
+                writer = animation.PillowWriter(fps=20)
+                anim.save(save_as, writer=writer)
+            elif save_as.split('.')[-1] == 'mp4':
+                anim.save(save_as, writer='ffmpeg')
+            else:
+                print('only support "gif" or "mp4')
         
         return HTML(anim.to_jshtml())
     
-    def plot_angles(self):
-        
-        fig, ax = plt.subplots(figsize=FIGSIZE)
-        ax.tick_params(axis='both', which='major', labelsize=FONTSIZE)
-        ax.xaxis.offsetText.set_fontsize(FONTSIZE)
-        ax.yaxis.offsetText.set_fontsize(FONTSIZE)
-        
-        for i in range(self.n_rod):
-            ax.plot(self.t, self.y[i*3+2], lw=LW, label='$\\theta_{'+str(i+1)+'}$')
-        ax.set_xlabel('T [s]', fontsize=FONTSIZE)
-        ax.set_ylabel('Angle [rads]', fontsize=FONTSIZE)
-        fig.legend(fontsize=FONTSIZE)
-        
-        plt.show()
-        
