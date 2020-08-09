@@ -2,3 +2,5 @@
 Numerical Methods Course Project
 
 Jupyter notebook demo with interactive animation in scripts folder
+
+Add gifs and video demos in imgs

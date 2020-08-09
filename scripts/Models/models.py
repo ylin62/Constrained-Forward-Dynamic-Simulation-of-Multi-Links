@@ -142,6 +142,18 @@ class BaseModel(object):
     
     def sim(self):
         pass
+    
+    def get_multipliers(self):
+        
+        f = self.external_input + self.M * self.potiential_field
+        a = np.block([[self.M, self.A.T], 
+                      [self.A, np.zeros((self.A.shape[0], self.A.shape[0]))]])
+        b = np.concatenate([f, -self.A_dot * self.q_dot])
+        
+        a = sp.lambdify(self.q, sp.Matrix(a))
+        b = sp.lambdify(sp.Matrix([self.q, self.q_dot, self.external_input, self.potiential_field]), sp.Matrix(b))
+        
+        return a, b
 
 class ExplictModel(BaseModel):
     '''
@@ -204,6 +216,24 @@ class ApproximateModel(BaseModel):
     
     def sim(self, t, y, f=None, g=None, c=None):
         
+        if f is not None:
+            assert len(f) == 3*self.n_rod, 'input needs to be a vector of length 3*n \
+                corresponding to [x, y, torque]'
+            f = np.array(f)
+        else:
+            f = np.zeros(3*self.n_rod)
+        if g is not None:
+            assert len(g) == 3*self.n_rod, 'potiential energy field n*[x, y, tau...]'
+            g = np.array(g)
+        else:
+            g = np.zeros(3*self.n_rod)
+        if c is not None:
+            assert len(c) == 3*self.n_rod
+            c = np.array(c)
+            print("in development")
+        else:
+            c = np.zeros(3*self.n_rod)
+        
         input_f = np.append(y, [f, g])
         b = self.b(*input_f)
         
@@ -222,21 +252,49 @@ class ProjectModel(BaseModel):
         
         f = self.external_input + self.M * self.potiential_field
 
-        odefunc = sp.Matrix([[self.S * self.v], 
-                             [(self.S.T * self.M * self.S).inv() * 
-                              (self.S.T * f - self.S.T * self.M * self.S.diff(self.t) * self.v)]])
+        self.a = sp.lambdify(self.q, self.S.T * self.M * self.S)
+        self.b = sp.lambdify(sp.Matrix([self.q, self.q_dot, self.external_input, self.potiential_field]), 
+                             self.S.T * f - self.S.T * self.M * self.S.diff(self.t) * self.v)
+
+        # odefunc = sp.Matrix([[self.S * self.v], 
+        #                      [(self.S.T * self.M * self.S).inv() * 
+        #                       (self.S.T * f - self.S.T * self.M * self.S.diff(self.t) * self.v)]])
+        # self.odefunc = sp.lambdify(sp.Matrix([self.q, self.q_dot, self.external_input, self.potiential_field]), odefunc)
         
-        self.odefunc = sp.lambdify(sp.Matrix([self.q, self.q_dot, self.external_input, self.potiential_field]), odefunc)
         self.S_func = sp.lambdify(self.q, self.S)
         
-    def sim(self, t, y, f=None, g=None, c=None):       
+    def sim(self, t, y, f=None, g=None, c=None):
+        
+        if f is not None:
+            assert len(f) == 3*self.n_rod, 'input needs to be a vector of length 3*n \
+                corresponding to [x, y, torque]'
+            f = np.array(f)
+        else:
+            f = np.zeros(3*self.n_rod)
+        if g is not None:
+            assert len(g) == 3*self.n_rod, 'potiential energy field n*[x, y, tau...]'
+            g = np.array(g)
+        else:
+            g = np.zeros(3*self.n_rod)
+        if c is not None:
+            assert len(c) == 3*self.n_rod
+            c = np.array(c)
+            print("in development")
+        else:
+            c = np.zeros(3*self.n_rod)
         
         q_dot = self.S_func(*y[:len(self.q)]) @ y[len(self.q):]
         f1 = np.append(y[:len(self.q)], q_dot)
-        input_f = np.append(f1, [f, g])        
-        ode = self.odefunc(*input_f)
+        input_f = np.append(f1, [f, g])
         
-        return ode[:, 0]
+        a = self.a(*y[:len(self.q)])
+        b = self.b(*input_f)
+        ode = np.append(q_dot, np.linalg.solve(a, b))
+        
+        # ode = self.odefunc(*input_f)
+        # return ode[:, 0]
+        
+        return ode
     
 class ExplictAlt(ExplictModel):
     """With seperate part constrains, join at second to last joint"""
@@ -362,23 +420,24 @@ if __name__ == "__main__":
     # y = np.append([0, 0.5, np.pi/2, 1.8765, 1.692, 0.3533, 3.3765, 1.192, -1.8767], np.zeros(9))
     # y = np.append([3.06161700e-17,  5.00000000e-01,  np.pi/2, 1.87648529e+00,  1.69195588e+00, 
     #                -5.92990441e+00,  3.37648529e+00,  1.19195588e+00,  1.06896358e+01], np.zeros(9))
-    y0 = [None, None, np.pi/2, None, None, None, None, None, None]
-    y_dot = [None, None, 0.1, None, None, None, None, None, None]
-    Demo = ExplictModel(m=m, l=l, close_chain=True)
-    pos, vel = Demo.initial_condition(y0, y_dot)
-    y = np.append(pos, vel)
-    # y = np.append(y, np.zeros(9))
-    t1 = time.time()
-    sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
-    # sol = ode4(Demo.sim, np.linspace(0, 10, 5000), y, args=(f, g, None))
-    print(time.time() - t1)
-    plt.figure()
-    plt.plot(sol.t, sol.y[2])
-    plt.figure()
-    plt.plot(sol.t, sol.y[5])
-    plt.figure()
-    plt.plot(sol.t, sol.y[8])
-    plt.show()
+    
+    # y0 = [None, None, np.pi/2, None, None, None, None, None, None]
+    # y_dot = [None, None, 0.1, None, None, None, None, None, None]
+    # Demo = ExplictModel(m=m, l=l, close_chain=True)
+    # pos, vel = Demo.initial_condition(y0, y_dot)
+    # y = np.append(pos, vel)
+    # # y = np.append(y, np.zeros(9))
+    # t1 = time.time()
+    # sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
+    # # sol = ode4(Demo.sim, np.linspace(0, 10, 5000), y, args=(f, g, None))
+    # print(time.time() - t1)
+    # plt.figure()
+    # plt.plot(sol.t, sol.y[2])
+    # plt.figure()
+    # plt.plot(sol.t, sol.y[5])
+    # plt.figure()
+    # plt.plot(sol.t, sol.y[8])
+    # plt.show()
     
     # print(Demo.lagrangian)
     
@@ -407,16 +466,13 @@ if __name__ == "__main__":
     ####################################Test Projection Model########################################
     # y = np.append([3.06161700e-17,  5.00000000e-01,  np.pi/2, 1.87648529e+00,  1.69195588e+00, 
     #                -5.92990441e+00,  3.37648529e+00,  1.19195588e+00,  1.06896358e+01], 0)
-    # y = np.append([0, 0.5, np.pi/2, 1.8765, 1.692, 0.3533, 3.3765, 1.192, -1.8767], 0)
+    # # y = np.append([0, 0.5, np.pi/2, 1.8765, 1.692, 0.3533, 3.3765, 1.192, -1.8767], 0)
     # t0 = time.time()
     # Demo = ProjectModel(m, l, close_chain=True)
     # print(time.time() - t0)
-    # # t0 = time.time()
-    # # Demo.sim(t=0, y=y, f=f, g=g, c=None)
-    # # print(time.time() - t0)
     # # print(Demo.sim(t=0, y=y, f=f, g=g, c=None))
     # t1 = time.time()
-    # # sol = ode4(Demo.sim, np.linspace(0, 5, 10000), y, args=(f, g, None))
+    # # # sol = ode4(Demo.sim, np.linspace(0, 5, 10000), y, args=(f, g, None))
     # sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
     # print(sol.t.shape)
     # print(time.time() - t1)

@@ -32,18 +32,17 @@ def print_govs(Model, f):
         
 def get_multipliers(model, f, g, sol, show=False):
     
-    sns.set_style("whitegrid")
-    M = np.diagonal(np.array(model.M).astype(float))
+    a, b = model.get_multipliers()
     multips = []
     for y in sol.y.T:
-        input_f = np.append(y, [f, M * g])
-        a = model.a(*y[:3*model.n_rod])
-        b = model.b(*input_f)
-        multips += [-np.linalg.solve(a, b)[3*model.n_rod:]]
-    
+        input_f = np.append(y, [f, g])
+        A = a(*y[:3*model.n_rod])
+        B = b(*input_f)
+        multips += [-np.linalg.solve(A, B)[3*model.n_rod:]]
     multips = np.concatenate(multips, axis=1)
     
     if show:
+        sns.set_style("whitegrid")
         colors = sns.hls_palette(len(multips), l=.3, s=.8)
         fig, ax = plt.subplots(figsize=FIGSIZE)
         ax.tick_params(axis='both', which='major', labelsize=FONTSIZE)
@@ -144,20 +143,27 @@ class SolutionDemo(object):
         
         plt.show()
         
-    def animate(self, interval=100, title=None, save_as=None, show_angle=False, multipliers=None):
+    def animate(self, interval=100, title=None, figsize=(6, 6), axis='off', save_as=None):
         
+        sns.set_style('white')
         lim = sum(self.l)
-        fig, ax = plt.subplots(figsize=FIGSIZE)
-        ax.tick_params(axis='both', which='major', labelsize=FONTSIZE)
-        ax.xaxis.offsetText.set_fontsize(FONTSIZE)
-        ax.yaxis.offsetText.set_fontsize(FONTSIZE)
+        fig, ax = plt.subplots(figsize=figsize)
+        if axis == 'off':
+            ax.set_axis_off()
+            dpi = 100
+        else:
+            dpi = 150
+            ax.tick_params(axis='both', which='major', labelsize=FONTSIZE)
+            ax.xaxis.offsetText.set_fontsize(FONTSIZE)
+            ax.yaxis.offsetText.set_fontsize(FONTSIZE)
+            time_template = 'time = {:.2f}s'
+            time_text = ax.text(0.05, 0.9, '', fontsize=FONTSIZE, transform=ax.transAxes)
+            if title is not None:
+                fig.suptitle(title, fontsize=FONTSIZE)
         ax.set_xlim(( -lim, lim))
         ax.set_ylim(( -lim, lim))
-        if title is not None:
-            fig.suptitle(title, fontsize=FONTSIZE)
         line, = ax.plot([], [], 'o-', lw=LW, markersize=MARKER)
-        time_template = 'time = {:.2f}s'
-        time_text = ax.text(0.05, 0.9, '', fontsize=FONTSIZE, transform=ax.transAxes)
+        ax.set_aspect('equal', adjustable='box')
 
         def init():
             line.set_data([], [])
@@ -167,8 +173,11 @@ class SolutionDemo(object):
             x = self.links[:, i, 0]
             y = self.links[:, i, 1]
             line.set_data(x, y)
-            time_text.set_text(time_template.format(self.t[i]))
-            return line, time_text
+            if axis == 'off':
+                return line,
+            else:
+                time_text.set_text(time_template.format(self.t[i]))
+                return line, time_text
         
         anim = animation.FuncAnimation(fig, animate, init_func=init, 
                                        frames=self.links.shape[1], 
@@ -184,11 +193,96 @@ class SolutionDemo(object):
             
             if save_as.split('.')[-1] == 'gif':        
                 writer = animation.PillowWriter(fps=20)
-                anim.save(save_as, writer=writer)
+                anim.save(save_as, writer=writer, dpi=dpi)
             elif save_as.split('.')[-1] == 'mp4':
-                anim.save(save_as, writer='ffmpeg')
+                anim.save(save_as, writer='ffmpeg', dpi=dpi)
             else:
-                print('only support "gif" or "mp4')
+                print('only support gif or mp4')
         
         return HTML(anim.to_jshtml())
     
+    def more_anim(self,  multipliers, interval=100, figsize=(18, 10), title=None, save_as=None):
+        
+        from matplotlib.gridspec import GridSpec
+        
+        colors = sns.hls_palette(len(multipliers), l=.3, s=.8)
+        sns.set_style('white')
+        lim = sum(self.l)
+        fig = plt.figure(constrained_layout=True, figsize=figsize)
+        gs = fig.add_gridspec(2, 3)
+        ax1 = fig.add_subplot(gs[:, :2])
+        ax2 = fig.add_subplot(gs[0, -1])
+        ax3 = fig.add_subplot(gs[1:, -1])
+        
+        line1, = ax1.plot([], [], 'o-', lw=LW, markersize=MARKER)
+        for i in range(self.n_rod):
+            line2, = ax2.plot(self.t, self.y[i*3+2, :], '-', lw=LW, color=colors[i], label='$\\theta_{'+str(i+1)+'}$')
+        line2, = ax2.plot([], [], 'o')
+        for i, item in enumerate(multipliers):
+            line3, = ax3.plot(self.t, item, '-', lw=LW, color=colors[i], label='$\\lambda_{'+str(i+1)+'}$')
+        line3, = ax3.plot([], [], 'o')
+        
+        ax1.set_xlim(( -lim, lim))
+        ax1.set_ylim(( -lim, lim))
+        ax1.set_aspect('equal', adjustable='box')
+        time_template = 'time = {:.2f}s'
+        time_text = ax1.text(0.05, 0.9, '', fontsize=FONTSIZE, transform=ax1.transAxes)
+        
+        ax2.grid()
+        ax2.set_ylabel('angle [$rads$]', fontsize=FONTSIZE)
+        ax2.set_title('Joint angles', fontsize=FONTSIZE)
+        ax3.grid()
+        ax3.set_xlabel('Time [s]', fontsize=FONTSIZE)
+        ax3.set_ylabel('force [$N$]', fontsize=FONTSIZE)
+        ax3.set_title('Lagrangian multipliers', fontsize=FONTSIZE)
+        fig.legend(loc=(0.575, 0.4))
+        
+        for ax in (ax1, ax2, ax3):
+            ax.tick_params(axis='both', which='major', labelsize=FONTSIZE)
+            ax.xaxis.offsetText.set_fontsize(FONTSIZE)
+            ax.yaxis.offsetText.set_fontsize(FONTSIZE)
+            
+        if title is not None:
+            fig.suptitle(title, fontsize=FONTSIZE)
+        
+        def init():
+            line1.set_data([], [])
+            line2.set_data([], [])
+            line3.set_data([], [])
+            return (line1, line2, line3)
+
+        def animate(i):
+            x = self.links[:, i, 0]
+            y = self.links[:, i, 1]
+            line1.set_data(x, y)
+            
+            line2.set_data([self.t[i]]*self.n_rod, [self.y[n*3+2, i] for n in range(self.n_rod)])
+            line2.set_marker(marker='o')
+            
+            line3.set_data([self.t[i]]*len(multipliers), [multipliers[j, i] for j in range(len(multipliers))]) 
+            line3.set_marker(marker='o')
+            
+            time_text.set_text(time_template.format(self.t[i]))
+            return line1, line2, line3, time_text
+        
+        anim = animation.FuncAnimation(fig, animate, init_func=init, 
+                                       frames=self.links.shape[1], 
+                                       interval=interval,
+                                       blit=True)
+        plt.close(anim._fig)
+        
+        if save_as:
+            folder = os.path.split(save_as)[0]
+            if len(folder) > 0:
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+            
+            if save_as.split('.')[-1] == 'gif':        
+                writer = animation.PillowWriter(fps=20)
+                anim.save(save_as, writer=writer, dpi=150)
+            elif save_as.split('.')[-1] == 'mp4':
+                anim.save(save_as, writer='ffmpeg', dpi=150)
+            else:
+                print('only support gif or mp4')
+        
+        return HTML(anim.to_jshtml())
