@@ -1,6 +1,10 @@
 # Constrained-Forward-Dynamic-Simulation-of-Multi-Links 
 Numerical Methods Course Project
 
-Jupyter notebook demo with interactive animation in scripts folder
+Jupyter notebook demo with interactive animation in [scripts](/scripts)
 
-Add gifs and video demos in imgs
+Add gifs and video demos in [imgs](/imgs)
+
+Double Pendulum | Triple Pendulum | Quadruple Pendulum | Four-bar
+--------------- | --------------- | ------------------ | --------
+![](imgs/DoublePendulum.gif) | ![](imgs/TriplePendulum.gif) | ![](imgs/QuadruplePendulum.gif) | ![](imgs/Fourbar.gif)
