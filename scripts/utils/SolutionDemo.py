@@ -199,7 +199,8 @@ class SolutionDemo(object):
             else:
                 print('only support gif or mp4')
         
-        return HTML(anim.to_jshtml())
+        # return HTML(anim.to_jshtml())
+        return HTML(anim.to_html5_video())
     
     def more_anim(self,  multipliers, interval=100, figsize=(18, 10), title=None, save_as=None):
         
