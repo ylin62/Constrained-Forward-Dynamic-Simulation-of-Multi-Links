@@ -411,99 +411,111 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     from solvers.fix_step_odes import *
     
+    FONTSIZE=20
+    img_dir = os.path.expanduser('~/Documents/course-projects/Constrained-Forward-Dynamic-Simulation-of-Multi-Links/imgs/')
     m = [1, 1, 1]
     l = [1, 4, 2.5, 3]
     g = [0, -9.81, 0, 0, -9.81, 0, 0, -9.81, 0]
     f = [0, 0, 5, 0, 0, 0, 0, 0, 0]
+    y0 = [None, None, np.pi/2, None, None, None, None, None, None]
+    y_dot = [None, None, 0.1, None, None, None, None, None, None]
+    
+    def compare_solvers(Demo, solvers_pool=('RK23', 'RK45', 'DOP853'), save_as=None):
+        
+        time_elapsed = []
+        fig, ax = plt.subplots(3, 1, sharex=True, figsize=(15, 9))
+        for solver_cand in solvers_pool:
+            print(solver_cand)
+            t1 = time.time()
+            sol = solve_ivp(Demo.sim, [0, 10], y, method=solver_cand, args=(f, g, None), t_eval=np.linspace(0, 10, 200))
+            time_elapsed += [time.time() - t1]
+            for a, axe in enumerate(ax):
+                axe.plot(sol.t, sol.y[a*3+2], lw=2)
+                axe.set_title("$\\theta_{:d}$".format(int(a+1)), fontsize=FONTSIZE)
+                axe.tick_params(axis='both', which='major', labelsize=FONTSIZE)
+        ax[-1].set_xlabel("time [s]", fontsize=FONTSIZE)
+        fig.legend(solvers_pool, fontsize=15)
+        
+        if not save_as:
+            plt.show()
+        else:
+            fig.savefig(save_as)
+        
+        return time_elapsed
+    
+    def compare_models(models, initial_conditions, solve='DOP853', save_as=None):
+        
+        fig, ax = plt.subplots(3, 1, sharex=True, figsize=(15, 9))
+        
+        time_elapsed = []
+        name = []
+        for m, model in enumerate(models):
+            name += [model.__class__.__name__]
+            ic = initial_conditions[m]
+            t1 = time.time()
+            sol = solve_ivp(model.sim, [0, 10], ic, method=solve, args=(f, g, None), t_eval=np.linspace(0, 10, 200))
+            time_elapsed += [time.time() - t1]    
+            for a, axe in enumerate(ax):
+                axe.plot(sol.t, sol.y[a*3+2], lw=2)
+                axe.set_title("$\\theta_{:d}$".format(int(a+1)), fontsize=FONTSIZE)
+                axe.tick_params(axis='both', which='major', labelsize=FONTSIZE)
+        ax[-1].set_xlabel("time [s]", fontsize=FONTSIZE)
+        fig.legend(name, fontsize=15)
+        
+        if not save_as:
+            plt.show()
+        else:
+            fig.savefig(save_as)
+        
+        return time_elapsed
     
     #####################################Test Explict Model##########################################
-    # y = np.append([0, 0.5, np.pi/2, 1.8765, 1.692, 0.3533, 3.3765, 1.192, -1.8767], np.zeros(9))
-    # y = np.append([3.06161700e-17,  5.00000000e-01,  np.pi/2, 1.87648529e+00,  1.69195588e+00, 
-    #                -5.92990441e+00,  3.37648529e+00,  1.19195588e+00,  1.06896358e+01], np.zeros(9))
-    
-    # y0 = [None, None, np.pi/2, None, None, None, None, None, None]
-    # y_dot = [None, None, 0.1, None, None, None, None, None, None]
     # Demo = ExplictModel(m=m, l=l, close_chain=True)
     # pos, vel = Demo.initial_condition(y0, y_dot)
     # y = np.append(pos, vel)
-    # # y = np.append(y, np.zeros(9))
-    # t1 = time.time()
-    # sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
-    # # sol = ode4(Demo.sim, np.linspace(0, 10, 5000), y, args=(f, g, None))
-    # print(time.time() - t1)
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[2])
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[5])
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[8])
-    # plt.show()
     
-    # print(Demo.lagrangian)
+    # solvers_pool = ('RK23', 'RK45', 'DOP853')
+    # time_elapsed = compare_solvers(Demo, solvers_pool=solvers_pool, save_as=img_dir+'Explicit_Model.eps')
+    # print(time_elapsed)
     
     ####################################Test Approximate Model######################################
-    # y = np.append([3.06161700e-17,  5.00000000e-01,  np.pi/2, 1.87648529e+00,  1.69195588e+00, 
-    #                -5.92990441e+00,  3.37648529e+00,  1.19195588e+00,  1.06896358e+01], 
-    #               np.zeros(9))
+    # solvers_pool = ('RK23', 'RK45', 'DOP853')
     # k = np.tile([1e6], 8)
-    # Demo = ApproximateModel(m=m, l=l, k=k, close_chain=True)    
-    # # t0 = time.time()
-    # # Demo.sim(t=0, y=y, f=f, g=g, c=None)
-    # # print(time.time() - t0)
-    # # print(Demo.sim(t=0, y=y, f=f, g=g, c=None))
-    # t1 = time.time()
-    # sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
-    # print(sol.t.shape)
-    # print(time.time() - t1)
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[2])
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[5])
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[8])
-    # plt.show()
+    # Demo = ApproximateModel(m=m, l=l, k=k, close_chain=True)
+    # pos, vel = Demo.initial_condition(y0, y_dot)
+    # y = np.append(pos, vel)
+    # time_elapsed = compare_solvers(Demo, solvers_pool=solvers_pool, save_as=img_dir+'Approximate_Model.eps')
+    # print(time_elapsed)
     
     ####################################Test Projection Model########################################
-    # y = np.append([3.06161700e-17,  5.00000000e-01,  np.pi/2, 1.87648529e+00,  1.69195588e+00, 
-    #                -5.92990441e+00,  3.37648529e+00,  1.19195588e+00,  1.06896358e+01], 0)
-    # # y = np.append([0, 0.5, np.pi/2, 1.8765, 1.692, 0.3533, 3.3765, 1.192, -1.8767], 0)
-    # t0 = time.time()
+    # solvers_pool = ('RK23', 'RK45', 'DOP853')
     # Demo = ProjectModel(m, l, close_chain=True)
-    # print(time.time() - t0)
-    # # print(Demo.sim(t=0, y=y, f=f, g=g, c=None))
-    # t1 = time.time()
-    # # # sol = ode4(Demo.sim, np.linspace(0, 5, 10000), y, args=(f, g, None))
-    # sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
-    # print(sol.t.shape)
-    # print(time.time() - t1)
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[2])
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[5])
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[8])
-    # plt.show()
+    # pos, vel = Demo.initial_condition(y0, y_dot)
+    # y = np.append(pos, vel[-1])
+    # time_elapsed = compare_solvers(Demo, solvers_pool=solvers_pool, save_as=img_dir+'Projection_Model.eps')
+    # print(time_elapsed)
+    
+    ####################################Compare different Models#####################################
+    
+    k = np.tile([1e6], 8)
+    models = [ExplictModel(m=m, l=l, close_chain=True), 
+              ApproximateModel(m=m, l=l, k=k, close_chain=True), 
+              ProjectModel(m, l, close_chain=True)]
+    
+    pos, vel = models[0].initial_condition(y0, y_dot)
+    
+    initial_conditions = [np.append(pos, vel), np.append(pos, vel), np.append(pos, vel[-1])]
+    
+    time_elapsed = compare_models(models, initial_conditions, solve='DOP853', save_as=img_dir+'model_compare.eps')
+    print(time_elapsed)
     
     ####################################Test different constrains####################################
-    # y = np.append([3.06161700e-17,  5.00000000e-01, np.pi/2, 1.08601471e+00, -6.79455882e-01, 
-    #                -9.96782005e-01,  2.58601471e+00, -1.17945588e+00, -1.90835893e+00], 
-    #               np.zeros(9))
     # k = np.tile([1e6], 8)
     # Demo = ExplictAlt(m, l, close_chain=True)
     # Demo = ApproximateAlt(m, l, k, close_chain=True)
     # Demo = ProjectAlt(m ,l, close_chain=True)
-    # # t0 = time.time()
-    # # Demo.sim(t=0, y=y, f=f, g=g, c=None)
-    # # print(time.time() - t0)
-    # # print(Demo.sim(t=0, y=y, f=f, g=g, c=None))
-    # t1 = time.time()
-    # sol = solve_ivp(Demo.sim, [0, 10], y, method='DOP853', args=(f, g, None))
-    # print(sol.t.shape)
-    # print(time.time() - t1)
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[2])
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[5])
-    # plt.figure()
-    # plt.plot(sol.t, sol.y[8])
-    # plt.show()
+    # solvers_pool = ('RK23', 'RK45', 'DOP853')
+    # pos, vel = Demo.initial_condition(y0, y_dot)
+    # y = np.append(pos, vel)
+    # time_elapsed = compare_solvers(Demo, solvers_pool=solvers_pool, save_as=img_dir+'Projection_Model.eps')
+    # print(time_elapsed)

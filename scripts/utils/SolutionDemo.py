@@ -94,7 +94,7 @@ class SolutionDemo(object):
             
         return np.array(links)
         
-    def plot_solution(self, idx):
+    def plot_solution(self, idx, save_as=None):
         '''
         plot chain links in 2D
         '''
@@ -124,6 +124,9 @@ class SolutionDemo(object):
             axe.tick_params(axis='both', which='major', labelsize=FONTSIZE)
             axe.xaxis.offsetText.set_fontsize(FONTSIZE)
             axe.yaxis.offsetText.set_fontsize(FONTSIZE)
+            
+        if save_as:
+            fig.savefig(save_as)
             
         plt.show()
     
