@@ -5,7 +5,7 @@ Jupyter notebook demo with interactive animation in [scripts](/scripts)
 
 Add gifs and video demos in [imgs](/imgs)
 
-Brief intro [intro](Serial_links.pdf)
+Brief [intro](Serial_links.pdf)
 
 Double Pendulum | Triple Pendulum | Quadruple Pendulum | Four-bar
 --------------- | --------------- | ------------------ | --------
