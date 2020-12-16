@@ -1,4 +1,4 @@
-# Constrained-Forward-Dynamic-Simulation-of-Multi-Links 
+# Constrained Forward Dynamic Simulation of Multi-Links 
 
 ## Introduction
 This project provided classes of modeling open and closed loop uniformly distributed mass serial links. Modeling based on Lagrangian methods with constrained generalized coordinates. Equations of Motion (EOM) are computed sybolically with sympy. EOMs can be manipulated into three different forms of state space models:
@@ -7,6 +7,10 @@ This project provided classes of modeling open and closed loop uniformly distrib
 2. Approximate constrains as springs.
 3. Null space.
 
+Provided initial condition solver, constrained force, torque and motion can be calculated with ODE solvers. 
+
+Comapare performance of different methods and ode solvers in terms of computational cost and accuracy. A brief presentation including modeling details and results can be found [here](Serial_links.pdf).
+
 Double Pendulum | Triple Pendulum | Quadruple Pendulum | Four-bar | Deca Pendulum
 --------------- | --------------- | ------------------ | -------- | -------------
 ![](imgs/DoublePendulum.gif) | ![](imgs/TriplePendulum.gif) | ![](imgs/QuadruplePendulum.gif) | ![](imgs/Fourbar.gif) | ![](imgs/DecaPendulum.gif)
@@ -14,5 +18,3 @@ Double Pendulum | Triple Pendulum | Quadruple Pendulum | Four-bar | Deca Pendulu
 Jupyter notebook demo with interactive animation in [scripts](/scripts)
 
 Add gifs and video demos in [imgs](/imgs)
-
-Brief [intro](Serial_links.pdf)
