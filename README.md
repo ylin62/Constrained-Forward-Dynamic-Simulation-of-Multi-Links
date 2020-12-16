@@ -11,7 +11,7 @@ Provided initial condition solver, constrained force, torque and motion can be c
 
 Comapare performance of different methods and ode solvers in terms of computational cost and accuracy. A brief presentation including modeling details and results can be found [here](Serial_links.pdf).
 
-Double Pendulum | Triple Pendulum | Quadruple Pendulum | Four-bar | Deca Pendulum
+[Double Pendulum](/scripts/ExplicitModel_Double_Pendulum.ipynb) | [Triple Pendulum](/scripts/ExplicitModel_Triple_Pendulum.ipynb) | [Quadruple Pendulum](/scripts/ExplicitModel_Quadruple_Pendulum.ipynb) | [Four-bar](/scripts/ExplicitModel_Fourbar.ipynb) | [Deca Pendulum](/scripts/ExplicitModel_Deca_Pendulum.ipynb)
 --------------- | --------------- | ------------------ | -------- | -------------
 ![](imgs/DoublePendulum.gif) | ![](imgs/TriplePendulum.gif) | ![](imgs/QuadruplePendulum.gif) | ![](imgs/Fourbar.gif) | ![](imgs/DecaPendulum.gif)
 
