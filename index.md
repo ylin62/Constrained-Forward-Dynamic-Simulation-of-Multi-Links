@@ -8,24 +8,26 @@ Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://j
 
 Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
 
-```markdown
-Syntax highlighted code block
+# Constrained Forward Dynamic Simulation of Multi-Links 
 
-# Header 1
-## Header 2
-### Header 3
+## Introduction
+This project provided classes of modeling open and closed loop uniformly distributed mass serial links. Modeling based on Lagrangian methods with constrained generalized coordinates. Equations of Motion (EOM) are computed sybolically with sympy. EOMs can be manipulated into three different forms of state space models:
 
-- Bulleted
-- List
+1. Eliminate Lagrangian multipliers.
+2. Approximate constrains as springs.
+3. Null space.
 
-1. Numbered
-2. List
+Provided initial condition solver, constrained force, torque and motion can be calculated with ODE solvers. 
 
-**Bold** and _Italic_ and `Code` text
+Comapare performance of different methods and ode solvers in terms of computational cost and accuracy. A brief presentation including modeling details and results can be found [here](Serial_links.pdf).
 
-[Link](url) and ![Image](src)
-```
+[Double Pendulum](/scripts/ExplicitModel_Double_Pendulum.ipynb) | [Triple Pendulum](/scripts/ExplicitModel_Triple_Pendulum.ipynb) | [Quadruple Pendulum](/scripts/ExplicitModel_Quadruple_Pendulum.ipynb) | [Four-bar](/scripts/ExplicitModel_Fourbar.ipynb) | [Deca Pendulum](/scripts/ExplicitModel_Deca_Pendulum.ipynb)
+--------------- | --------------- | ------------------ | -------- | -------------
+![](imgs/DoublePendulum.gif) | ![](imgs/TriplePendulum.gif) | ![](imgs/QuadruplePendulum.gif) | ![](imgs/Fourbar.gif) | ![](imgs/DecaPendulum.gif)
 
+Jupyter notebook demo with interactive animation in [scripts](/scripts)
+
+Add gifs and video demos in [imgs](/imgs)
 For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
 
 ### Jekyll Themes
