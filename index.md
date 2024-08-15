@@ -1,5 +1,3 @@
-## Welcome to GitHub Pages
-
 # Constrained Forward Dynamic Simulation of Multi-Links 
 
 ## Introduction
@@ -20,6 +18,20 @@ Comapare performance of different methods and ode solvers in terms of computatio
 Jupyter notebook demo with interactive animation in [scripts](https://github.com/ylin62/Constrained-Forward-Dynamic-Simulation-of-Multi-Links/tree/gh-pages/scripts)
 
 Gifs and video demos in [imgs](https://github.com/ylin62/Constrained-Forward-Dynamic-Simulation-of-Multi-Links/tree/gh-pages/imgs)
+
+## Demo with Lagrangian multipliers
+
+Double Pendulum
+<video src="imgs/DoublePendulum.mp4" width="800" height="450" controls></video>
+
+Tripple Pendulum
+<video src="imgs/TriplePendulum.mp4" width="800" height="450" controls></video>
+
+FourBar
+<video src="imgs/Fourbar.mp4" width="800" height="450" controls></video>
+
+Deca Pendulum
+<video src="imgs/DecaPendulum.mp4" width="800" height="450" controls></video>
 
 <!-- ### Jekyll Themes
 
