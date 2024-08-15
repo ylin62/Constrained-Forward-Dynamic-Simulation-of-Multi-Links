@@ -20,7 +20,7 @@ def ode1(func, tspan, y0, args=None):
     
     return sol
 
-def ode2(func, tspan, y0, **kwargs):
+def ode2(func, tspan, y0, args=None, **kwargs):
     
     if args is not None:
         func = lambda t, y, func=func: func(t, y, *args)
@@ -39,7 +39,7 @@ def ode2(func, tspan, y0, **kwargs):
     
     return sol
 
-def ode3(func, tspan, y0, **kwargs):
+def ode3(func, tspan, y0, args=None, **kwargs):
     
     if args is not None:
         func = lambda t, y, func=func: func(t, y, *args)
