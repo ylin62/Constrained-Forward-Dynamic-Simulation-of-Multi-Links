@@ -20,16 +20,25 @@ Gifs and video demos in [imgs](https://github.com/ylin62/Constrained-Forward-Dyn
 ## Demo with Lagrangian multipliers
 
 Double Pendulum
-<video src="imgs/DoublePendulum.mp4" width="800" height="450" controls></video>
+<p align="center">
+<video src="imgs/DoublePendulum.mp4" width="700" height="400" controls></video>
+</p>
 
 Tripple Pendulum
-<video src="imgs/TriplePendulum.mp4" width="800" height="450" controls></video>
+<p align="center">
+<video src="imgs/TriplePendulum.mp4" width="700" height="400" controls></video>
+</p>
 
 FourBar
-<video src="imgs/Fourbar.mp4" width="800" height="450" controls></video>
+<p align="center">
+<video src="imgs/Fourbar.mp4" width="700" height="400" controls></video>
+</p>
 
 Deca Pendulum
-<video src="imgs/DecaPendulum.mp4" width="800" height="450" controls></video>
+<p align="center">
+<video src="imgs/DecaPendulum.mp4" width="700" height="400" controls></video>
+</p>
+
 
 <!-- ### Jekyll Themes
 
