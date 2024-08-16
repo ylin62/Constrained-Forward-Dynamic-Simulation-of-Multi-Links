@@ -2,11 +2,11 @@ This project provided classes of modeling open and closed loop uniformly distrib
 
 1. Eliminate Lagrangian multipliers.
 2. Approximate constrains as springs.
-3. Null space.
+3. Project governing equations to null space.
 
-Provided initial condition solver, constrained force, torque and motion can be calculated with ODE solvers. 
+Provided initial conditions and solver, constrained force, torque and motion can be simulated with ODE solvers. 
 
-Comapare performance of different methods and ode solvers in terms of computational cost and accuracy. A brief presentation including modeling details and results can be found [here](https://github.com/ylin62/Constrained-Forward-Dynamic-Simulation-of-Multi-Links/blob/gh-pages/Serial_links.pdf).
+Comapared performance of different methods and ode solvers in terms of computational cost and accuracy. A brief presentation including modeling details and results can be found [here](https://github.com/ylin62/Constrained-Forward-Dynamic-Simulation-of-Multi-Links/blob/gh-pages/Serial_links.pdf).
 
 [Double Pendulum](https://github.com/ylin62/Constrained-Forward-Dynamic-Simulation-of-Multi-Links/blob/gh-pages/scripts/ExplicitModel_Double_Pendulum.ipynb) | [Triple Pendulum](https://github.com/ylin62/Constrained-Forward-Dynamic-Simulation-of-Multi-Links/blob/gh-pages/scripts/ExplicitModel_Triple_Pendulum.ipynb) | [Quadruple Pendulum](https://github.com/ylin62/Constrained-Forward-Dynamic-Simulation-of-Multi-Links/blob/gh-pages/scripts/ExplicitModel_Quadruple_Pendulum.ipynb) | [Four-bar](https://github.com/ylin62/Constrained-Forward-Dynamic-Simulation-of-Multi-Links/blob/gh-pages/scripts/ExplicitModel_Fourbar.ipynb) | [Deca Pendulum](https://github.com/ylin62/Constrained-Forward-Dynamic-Simulation-of-Multi-Links/blob/gh-pages/scripts/ExplicitModel_Deca_Pendulum.ipynb)
 --------------- | --------------- | ------------------ | -------- | -------------
@@ -16,7 +16,7 @@ Jupyter notebook demo with interactive animation in [scripts](https://github.com
 
 Gifs and video demos in [imgs](https://github.com/ylin62/Constrained-Forward-Dynamic-Simulation-of-Multi-Links/tree/gh-pages/imgs)
 
-## Demo with Lagrangian multipliers
+## Demo with Simulation Results and Calculation of Lagrangian Multipliers (Constrained force/torque)
 
 Double Pendulum
 <p align="center">

@@ -5,11 +5,11 @@ This project provided classes of modeling open and closed loop uniformly distrib
 
 1. Eliminate Lagrangian multipliers.
 2. Approximate constrains as springs.
-3. Null space.
+3. Project governing equations to null space.
 
 Provided initial condition solver, constrained force, torque and motion can be calculated with ODE solvers. 
 
-Comapare performance of different methods and ode solvers in terms of computational cost and accuracy. A brief presentation including modeling details and results can be found [here](Serial_links.pdf).
+Comapared performance of different methods and ode solvers in terms of computational cost and accuracy. A brief presentation including modeling details and results can be found [here](Serial_links.pdf).
 
 [Double Pendulum](/scripts/ExplicitModel_Double_Pendulum.ipynb) | [Triple Pendulum](/scripts/ExplicitModel_Triple_Pendulum.ipynb) | [Quadruple Pendulum](/scripts/ExplicitModel_Quadruple_Pendulum.ipynb) | [Four-bar](/scripts/ExplicitModel_Fourbar.ipynb) | [Deca Pendulum](/scripts/ExplicitModel_Deca_Pendulum.ipynb)
 --------------- | --------------- | ------------------ | -------- | -------------
